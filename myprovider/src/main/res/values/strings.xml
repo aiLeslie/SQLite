@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">My provider</string>
+    <string name="ok">ok</string>
+    <string name="cancel">cancel</string>
+    <string name="enter_database_name">Enter Database Name</string>
+    <string name="enter_database_version">Enter Database Version</string>
+</resources>

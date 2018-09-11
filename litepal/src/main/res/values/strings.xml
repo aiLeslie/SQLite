@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">LitePal</string>
+    <string name="excute">excute</string>
+    <string name="title">标题</string>
+    <string name="cancel">退出</string>
+    <string name="create">创建</string>
+</resources>
