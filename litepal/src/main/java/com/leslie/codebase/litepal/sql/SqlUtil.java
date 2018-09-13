@@ -5,11 +5,13 @@ package com.leslie.codebase.litepal.sql;
  */
 public class SqlUtil {
     public static String[] java_types = {
-            "string", "int", "short", "long", "int", "float", "double", "blob",
+            String.class.getName(), Integer.class.getName(), Short.class.getName(), Long.class.getName(),
+            Float.class.getName(),Double.class.getName(),Boolean.class.getName()
     };
 
     public static String[] sql_type = {
-            "char", "int", "short", "long", "int", "float", "double", "blob",
+            "char", "int", "short", "long",
+            "float", "double", "blob",
     };
 
     private static StringBuilder builder = new StringBuilder();

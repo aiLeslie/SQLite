@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@drawable/crystal"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/crystal"
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:onClick="dismiss"
         android:textColor="#262626"
-        android:textSize="20dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:textSize="20dp" />
+
     <TextView
 
-        android:layout_marginTop="10dp"
-        android:background="#ff5c7f"
         android:layout_width="match_parent"
-        android:layout_height="2dp" />
+        android:layout_height="2dp"
+        android:layout_marginTop="10dp"
+        android:background="#ff5c7f" />
+
+
+
     <ListView
         android:id="@+id/listView"
         android:layout_width="match_parent"

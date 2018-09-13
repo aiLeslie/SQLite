@@ -4,7 +4,7 @@
 
     <version value="1" ></version>
 
-    <list>
-        <mapping class="com.leslie.codebase.litepal.tables.Person"></mapping>
-    </list>
+    <!--<list>-->
+        <!--<mapping class="com.leslie.codebase.litepal.tables.Person"></mapping>-->
+    <!--</list>-->
 </litepal>

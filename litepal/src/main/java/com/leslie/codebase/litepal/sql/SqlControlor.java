@@ -1,5 +1,6 @@
 package com.leslie.codebase.litepal.sql;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -85,7 +86,7 @@ public class SqlControlor {
                 map = new HashMap<>();
 
                 for (String column : columns) {
-                    map.put(column, String.valueOf(QueryMethod.get(cursor, typeMap.getString(tableName + "$" + column + "_TYPE", "char"), column)));
+                    map.put(column, QueryMethod.get(cursor, typeMap.getString(tableName + "$" + column + "_TYPE", "char"), column));
                 }
 
                 values.add(map);
@@ -114,12 +115,49 @@ public class SqlControlor {
             }
         }
 
-        try{
+        try {
             execute(SqlUtil.createTable(tableName, fields));
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             return false;
         }
+        SharedPreferences.Editor editor = typeMap.edit();
+        String name, type;
+        String separator = " ";
+        for (String field : fields) {
+            name = field.substring(0, field.indexOf(separator));
+            type = field.substring(field.indexOf(separator) + 1);
+            editor.putString(tableName + "$" + name + "_TYPE", type);
+        }
+        editor.apply();
+
         return true;
+    }
+
+    public boolean insertTable(String tableName, String[] fields) {
+        String name, value;
+        String separator = " = ";
+        ContentValues contentValues = new ContentValues();
+        for (String field : fields) {
+            try {
+                name = field.substring(0, field.indexOf(separator));
+                value = field.substring(field.indexOf(separator )+ separator.length());
+                contentValues.put(name, value);
+            }catch(StringIndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+        if(contentValues.size() == 0) {
+            return false;
+        }
+        mDatabase.insert(tableName, null, contentValues);
+        return true;
+
+    }
+
+    public String getType(String tableName, String field) {
+        return typeMap.getString(tableName + "$" + field + "_TYPE", "null");
     }
 
 

@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -16,7 +17,6 @@ import android.view.ViewPropertyAnimator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
-import android.view.animation.ScaleAnimation;
 import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ArrayAdapter<String> tableAdapter;
     private ListAdapter fieldAdapter;
 
-//    private SQLiteDatabase database = Connector.getDatabase();
+    //    private SQLiteDatabase database = Connector.getDatabase();
     private SqlControlor sqlControlor = new SqlControlor();
 
 
@@ -123,7 +123,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         updateListView(listView);
 
     }
-    
+
+
+
     private void updateListView(ListView listView) {
         ((ArrayAdapter) listView.getAdapter()).notifyDataSetChanged();
     }
@@ -170,6 +172,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             /******************新建表格******************/
             case R.id.newTable:
                 showPopupWindow(R.layout.activity_main, R.layout.option_new_table, createPopupBinder());
+                break;
+            case R.id.insertTable:
+                showPopupWindow(R.layout.activity_main, R.layout.option_insert_table, createPopupBinder());
                 break;
         }
         return true;
@@ -228,17 +233,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         PopupWindow popupWindow = new PopupWindow(contentView, ActionBar.LayoutParams.WRAP_CONTENT, 1300, true);
 
-        binder.OnBind(content, contentView, popupWindow);
+        if (binder.OnBind(content, contentView, popupWindow)) {
+            popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
 
-        popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
-
-        openingAni(contentView);
+            openingAni(contentView);
+        }
 
 
     }
 
     private interface PopupBinder {
-        void OnBind(int content, View contentView, PopupWindow window);
+        boolean OnBind(int content, View contentView, PopupWindow window);
     }
 
     // popupWindow装订器对象
@@ -248,15 +253,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (binder == null) {
             binder = new PopupBinder() {
                 @Override
-                public void OnBind(int content, View contentView, PopupWindow window) {
+                public boolean OnBind(int content, View contentView, PopupWindow window) {
                     switch (content) {
                         case R.layout.option_new_table:
-                            bindAddOption(contentView, window);
-                            break;
-                        case R.layout.option_list:
-                            bindItemOption(contentView, window);
-                            break;
+                            return bindNewTableOption(contentView, window);
+                        case R.layout.option_select_type:
+                            return bindSelectTypeOption(contentView, window);
+                        case R.layout.option_insert_table:
+                            return bindInsertTableOption(contentView, window);
                     }
+                    return false;
                 }
             };
         }
@@ -277,10 +283,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     /**
      * 弹出选择类型窗口
+     *
      * @param view
      * @param window
      */
-    private void bindItemOption(View view, final PopupWindow window) {
+    private boolean bindSelectTypeOption(View view, final PopupWindow window) {
         TextView textView = view.findViewById(R.id.title);
         textView.setText("请输入字段类型");
         ListView listView = view.findViewById(R.id.listView);
@@ -292,11 +299,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 dismissWindowAni(window, view);
             }
         });
+        return true;
     }
 
     TextView editType;
 
-    private void bindAddOption(final View view, final PopupWindow window) {
+    private boolean bindNewTableOption(final View view, final PopupWindow window) {
         TextView textView = view.findViewById(R.id.title);
         textView.setText("请输入表格信息");
 
@@ -322,22 +330,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onClick(View v) {
                 switch (v.getId()) {
                     case R.id.editType:
-                        showPopupWindow(R.layout.activity_main, R.layout.option_list, createPopupBinder());
+                        showPopupWindow(R.layout.activity_main, R.layout.option_select_type, createPopupBinder());
 
                         break;
                     case R.id.buttonAdd:
+                        if (TextUtils.isEmpty(editField.getText().toString()) || "请选择类型".equals(editType.getText().toString())){
+                            Toast.makeText(MainActivity.this, "请填写字段信息!", Toast.LENGTH_SHORT).show();
+                            break;
+                        }
                         fields.add(editField.getText().toString() + " " + editType.getText().toString());
                         updateListView(listView);
                         break;
 
 
                     case R.id.buttonOK:
-                        dismissWindowAni(window, view);
                         if (sqlControlor.createTable(editTbale.getText().toString(), fields.toArray(new String[fields.size()]))) {
-                            Toast.makeText(MainActivity.this, "成功创建\""+ editTbale.getText().toString() +"\"表格", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "成功创建\"" + editTbale.getText().toString() + "\"表格", Toast.LENGTH_SHORT).show();
                             updateTableList();
+                            dismissWindowAni(window, view);
                         } else {
-                            Toast.makeText(MainActivity.this, "创建表格失败", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "创建表格失败!", Toast.LENGTH_SHORT).show();
                         }
 
                         break;
@@ -356,6 +368,107 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn.setOnClickListener(listener);
         btn = view.findViewById(R.id.buttonOK);
         btn.setOnClickListener(listener);
+
+        return true;
+    }
+    int position = -1;
+    private boolean bindInsertTableOption(final View view, final PopupWindow window) {
+        String tableName = null;
+        if (!baseDir()) {
+            tableName = getTitle().toString();
+        } else {
+            Toast.makeText(this, "请选择表格,再插入数据!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        TextView textView = view.findViewById(R.id.title);
+        textView.setText("请输入信息");
+
+
+        final TextView editType = view.findViewById(R.id.editType);
+        editType.setText("类型");
+
+        final TextView editField = view.findViewById(R.id.edit_field);
+
+        final EditText editValue = view.findViewById(R.id.edit_value);
+
+        final List<String> fields = new ArrayList<>();
+        for (String s : sqlControlor.columns(tableName)) {
+            fields.add(s);
+        }
+        final ListView listView = view.findViewById(R.id.listView);
+
+
+        listView.setAdapter(new ArrayAdapter<String>(MainActivity.this, R.layout.support_simple_spinner_dropdown_item, fields));
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MainActivity.this.position = position;
+                String s = fields.get(position);
+                String separator = " = ";
+                if (s.contains(separator)){
+                    String name = s.substring(0, s.indexOf(separator));
+                    String value = s.substring(s.indexOf(separator )+ 1);
+                    editField.setText(name);
+                    editValue.setText(value);
+                } else {
+                    editField.setText(s);
+                    editValue.setText("");
+                }
+
+                editType.setText(sqlControlor.getType(getTitle().toString(), editField.getText().toString()));
+
+
+            }
+        });
+
+
+        class Listener implements View.OnClickListener {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+
+                    case R.id.buttonAdd:
+                        if (TextUtils.isEmpty(editValue.getText().toString()))return;
+                        if (position != -1){
+                            fields.remove(position);
+                            position = -1;
+                        } else {
+                           return;
+                        }
+                        fields.add(editField.getText().toString() + " = " + editValue.getText().toString());
+                        updateListView(listView);
+                        break;
+
+
+                    case R.id.buttonOK:
+
+                        if (sqlControlor.insertTable(getTitle().toString(), fields.toArray(new String[fields.size()]))) {
+                            Toast.makeText(MainActivity.this, "数据成功插入\"" + getTitle().toString() + "\"表格", Toast.LENGTH_SHORT).show();
+                            showTableDir(getTitle().toString());
+                            dismissWindowAni(window, view);
+                        } else {
+                            Toast.makeText(MainActivity.this, "数据插入失败!", Toast.LENGTH_SHORT).show();
+                        }
+
+                        break;
+                    case R.id.buttonCancel:
+                        dismissWindowAni(window, view);
+                        break;
+                }
+            }
+        }
+        Listener listener = new Listener();
+        Button btn = view.findViewById(R.id.buttonAdd);
+        btn.setText("更新该列信息");
+        btn.setOnClickListener(listener);
+        btn = view.findViewById(R.id.buttonCancel);
+        btn.setOnClickListener(listener);
+        btn = view.findViewById(R.id.buttonOK);
+        btn.setText("插入数据");
+        btn.setOnClickListener(listener);
+        return true;
     }
 
     /***************************** END *****************************/

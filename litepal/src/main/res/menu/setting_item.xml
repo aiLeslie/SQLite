@@ -6,5 +6,8 @@
     <item
         android:id="@+id/newTable"
         android:title="新建表格"/>
+    <item
+        android:id="@+id/insertTable"
+        android:title="插入数据"/>
 
 </menu>
