@@ -6,14 +6,18 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 
 import org.litepal.LitePalApplication;
 import org.litepal.tablemanager.Connector;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SqlControlor {
     private static final String TAG = "SqlControlor";
@@ -23,6 +27,7 @@ public class SqlControlor {
     private List<Cursor> cursors = new ArrayList<>();
     private List<Map<String, String>> values = new ArrayList<>();
     private SharedPreferences typeMap;
+    private String currTable;
 
     {
         typeMap = LitePalApplication.getContext().getSharedPreferences("TYPES", Context.MODE_PRIVATE);
@@ -73,6 +78,8 @@ public class SqlControlor {
 
     public List fetchValues(String tableName) {
 
+        currTable = tableName;
+
         Cursor cursor = mDatabase.query(tableName, null, null, null, null, null, null);
         if (cursor != null) {
 
@@ -101,6 +108,11 @@ public class SqlControlor {
             value.clear();
         }
         values.clear();
+    }
+
+    public boolean dropTable(String tableName) {
+        mDatabase.execSQL(SqlUtil.dropTable(tableName));
+        return true;
     }
 
     public boolean createTable(String tableName, String[] fields) {
@@ -139,20 +151,94 @@ public class SqlControlor {
         ContentValues contentValues = new ContentValues();
         for (String field : fields) {
             try {
-                name = field.substring(0, field.indexOf(separator));
-                value = field.substring(field.indexOf(separator )+ separator.length());
-                contentValues.put(name, value);
-            }catch(StringIndexOutOfBoundsException e) {
+                if (field.contains(separator)) {
+                    name = field.substring(0, field.indexOf(separator));
+                    value = field.substring(field.indexOf(separator) + separator.length());
+                    contentValues.put(name, value);
+                }
+
+            } catch (StringIndexOutOfBoundsException e) {
                 e.printStackTrace();
             }
 
 
         }
-        if(contentValues.size() == 0) {
+        if (contentValues.size() == 0) {
             return false;
         }
         mDatabase.insert(tableName, null, contentValues);
+
+        fetchValues(tableName);
+
         return true;
+
+    }
+
+    public boolean updateTable(String tableName, List<String> fields, String where) {
+        String separator = "=";
+        for (int i = 0; i < fields.size(); i++) {
+            if (!fields.get(i).contains(separator)) {
+                fields.remove(fields.get(i));
+                i--;
+            }
+        }
+
+        if (fields.size() == 0) {
+            return false;
+        }
+        try {
+            mDatabase.execSQL(SqlUtil.updateRows(tableName, fields.toArray(new String[fields.size()]), where));
+        }catch (SQLiteException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        fetchValues(tableName);
+
+        return true;
+    }
+
+    public Map<String, String> getRow(String tableName, int index) {
+        if (tableName != null && (currTable == null || currTable.equals(tableName))) {
+            currTable = tableName;
+            Map<String, String> map = new HashMap<>();
+            map.putAll(values.get(index));
+            return map;
+        } else {
+            throw new RuntimeException("列表数据异常");
+        }
+    }
+
+    public boolean deleteDataForTable(String tableName, int index) {
+        if (tableName != null && (currTable == null || currTable.equals(tableName))) {
+            Map<String, String> map = values.get(index);
+            StringBuilder builder = new StringBuilder();
+            List<String> args = new ArrayList<>();
+            int i = 0;
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                if (!entry.getValue().equals("null")) {
+                    if (builder.length() != 0) {
+                        builder.append(" and ");
+                    }
+
+                    builder.append(entry.getKey() + " = ?");
+                    args.add(entry.getValue());
+
+                }
+
+            }
+            String whereClause = builder.toString();
+            int row = mDatabase.delete(tableName, whereClause, args.toArray(new String[args.size()]));
+            if (row == 0) return false;
+            else {
+                fetchValues(tableName);
+                return true;
+            }
+        } else {
+            throw new RuntimeException("列表数据异常");
+
+        }
+
 
     }
 

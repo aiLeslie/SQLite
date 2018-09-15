@@ -6,6 +6,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.TextView;
 
 
@@ -16,7 +17,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.TextVi
     private String[] columns;
     private Map<String, String> value;
 
-    public RecyclerAdapter(String[] columns,  Map<String, String> obj) {
+    public RecyclerAdapter(String[] columns, Map<String, String> obj) {
         this.columns = columns;
         this.value = obj;
     }
@@ -48,6 +49,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.TextVi
 
         public TextViewHolder(@NonNull View itemView) {
             super(itemView);
+            itemView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             textView1 = itemView.findViewById(android.R.id.text1);
             textView2 = itemView.findViewById(android.R.id.text2);
         }

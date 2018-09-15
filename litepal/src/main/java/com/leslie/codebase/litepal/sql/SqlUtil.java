@@ -1,5 +1,9 @@
 package com.leslie.codebase.litepal.sql;
 
+import android.text.TextUtils;
+
+import org.w3c.dom.Text;
+
 /**
  * 本类用来快捷创建SQL语句
  */
@@ -203,10 +207,6 @@ public class SqlUtil {
 
             throw new IllegalArgumentException("fields == null ! ");
 
-        } else if (where == null) {
-
-            throw new IllegalArgumentException("where == null ! ");
-
         }
 
         builder.setLength(0);
@@ -226,11 +226,14 @@ public class SqlUtil {
 
         builder.append(" ");
 
-        if (!where.startsWith("where")) {
-            builder.append("where ");
-        }
+        if (where != null && !TextUtils.isEmpty(where)) {
+            if (!where.startsWith("where")) {
+                builder.append("where ");
+            }
 
-        builder.append(where);
+            builder.append(where);
+
+        }
 
         builder.append(";");
 

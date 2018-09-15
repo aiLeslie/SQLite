@@ -10,4 +10,8 @@
         android:id="@+id/insertTable"
         android:title="插入数据"/>
 
+    <item
+        android:id="@+id/updateTable"
+        android:title="更新数据"/>
+
 </menu>

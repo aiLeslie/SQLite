@@ -8,6 +8,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +27,7 @@ public class ListAdapter extends ArrayAdapter<Map<String, String>> {
     private int layoutId;
     private String[] columns;
     private List<Map<String, String>> values;
+    public RecyclerView.OnItemTouchListener listener;
 
     public ListAdapter(@NonNull Context context, int resource, @NonNull List<Map<String, String>> objects) {
         super(context, resource, objects);
@@ -35,6 +37,11 @@ public class ListAdapter extends ArrayAdapter<Map<String, String>> {
 
     public ListAdapter setColumns(String[] columns) {
         this.columns = columns;
+        return this;
+    }
+
+    public ListAdapter setListener(RecyclerView.OnItemTouchListener obj) {
+        listener = obj;
         return this;
     }
 
@@ -53,11 +60,12 @@ public class ListAdapter extends ArrayAdapter<Map<String, String>> {
     private void initRecyclerView(RecyclerView recyclerView, int i) {
         recyclerView.setAdapter(new RecyclerAdapter(columns, values.get(i)));
 
+        if (listener != null)recyclerView.addOnItemTouchListener(listener);
+
 //        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false);
 //        recyclerView.setLayoutManager(layoutManager);
 
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 4);
-        gridLayoutManager.setOrientation(GridLayoutManager.VERTICAL);
+        StaggeredGridLayoutManager gridLayoutManager = new StaggeredGridLayoutManager(1, GridLayoutManager.HORIZONTAL);
         recyclerView.setLayoutManager(gridLayoutManager);
     }
 }
