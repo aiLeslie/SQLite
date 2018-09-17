@@ -3,6 +3,7 @@ package com.leslie.codebase.litepal.adapter;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,8 +51,11 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.TextVi
         public TextViewHolder(@NonNull View itemView) {
             super(itemView);
             itemView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            itemView.setPadding(20, 0, 20, 0);
             textView1 = itemView.findViewById(android.R.id.text1);
+            textView1.setGravity(Gravity.LEFT);
             textView2 = itemView.findViewById(android.R.id.text2);
+            textView2.setGravity(Gravity.LEFT);
         }
     }
 }

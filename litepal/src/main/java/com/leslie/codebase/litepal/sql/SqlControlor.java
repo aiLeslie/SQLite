@@ -112,6 +112,13 @@ public class SqlControlor {
 
     public boolean dropTable(String tableName) {
         mDatabase.execSQL(SqlUtil.dropTable(tableName));
+        SharedPreferences.Editor editor = typeMap.edit();
+        for (String key : typeMap.getAll().keySet()) {
+            if (key.startsWith(tableName + "$"))
+            editor.remove(key);
+        }
+        editor.apply();
+
         return true;
     }
 
@@ -188,7 +195,7 @@ public class SqlControlor {
         }
         try {
             mDatabase.execSQL(SqlUtil.updateRows(tableName, fields.toArray(new String[fields.size()]), where));
-        }catch (SQLiteException e) {
+        } catch (SQLiteException e) {
             e.printStackTrace();
             return false;
         }
@@ -216,7 +223,7 @@ public class SqlControlor {
             List<String> args = new ArrayList<>();
             int i = 0;
             for (Map.Entry<String, String> entry : map.entrySet()) {
-                if (!entry.getValue().equals("null")) {
+                if (!"null".equals(entry.getValue()) && !"0".equals(entry.getValue())) {
                     if (builder.length() != 0) {
                         builder.append(" and ");
                     }
@@ -227,11 +234,13 @@ public class SqlControlor {
                 }
 
             }
+            if (builder.length() == 0) return false;
             String whereClause = builder.toString();
             int row = mDatabase.delete(tableName, whereClause, args.toArray(new String[args.size()]));
             if (row == 0) return false;
             else {
                 fetchValues(tableName);
+
                 return true;
             }
         } else {

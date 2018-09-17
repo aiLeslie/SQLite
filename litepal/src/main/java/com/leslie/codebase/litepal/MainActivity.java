@@ -438,7 +438,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String separator = " = ";
                 if (s.contains(separator)) {
                     String name = s.substring(0, s.indexOf(separator));
-                    String value = s.substring(s.indexOf(separator) + 1);
+                    String value = s.substring(s.indexOf(separator) + separator.length());
                     editField.setText(name);
                     editValue.setText(value);
                 } else {
@@ -542,7 +542,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 String separator = " = ";
                 if (s.contains(separator)) {
                     String name = s.substring(0, s.indexOf(separator));
-                    String value = s.substring(s.indexOf(separator) + 1);
+                    String value = s.substring(s.indexOf(separator) + separator.length());
                     editField.setText(name);
                     editValue.setText(value);
                 } else {
