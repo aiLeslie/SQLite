@@ -10,13 +10,19 @@ import org.w3c.dom.Text;
 public class SqlUtil {
     public static String[] java_types = {
             String.class.getName(), Integer.class.getName(), Short.class.getName(), Long.class.getName(),
-            Float.class.getName(),Double.class.getName(),Boolean.class.getName()
+            Float.class.getName(), Double.class.getName(), Boolean.class.getName()
     };
 
     public static String[] sql_type = {
             "char", "int", "short", "long",
             "float", "double", "blob",
     };
+
+    public static String[] symbols = {
+            "=", "<", "<=", ">", ">="
+    };
+
+    public static String QUESTION_MARK = "?";
 
     private static StringBuilder builder = new StringBuilder();
 
@@ -242,18 +248,14 @@ public class SqlUtil {
     }
 
 
-//    private String parseString(String type, Object obj) {
-//        switch (type) {
-//            case "string":
-//
-//            case "char":
-//
-//                return (String) obj;
-//
-//            case "int":
-//
-//                return String.valueOf();
-//        }
-//    }
+    public static String containSymbol(String clause) {
+        for (String symbol : symbols) {
+            if (clause.contains(symbol)) {
+                return symbol;
+            }
+        }
+        return null;
+    }
+
 
 }

@@ -40,7 +40,6 @@ import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    //    private TextView showInfo;
     private EditText editText;
     private ListView listView;
 
@@ -61,21 +60,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startAnimation();
         // 设置标题为数据库的名称
         setTitle(sqlControlor.databaseName());
-
-
-//        inserDataToTable(database);
-//        inserDataToTable(database);
-//        inserDataToTable(database);
-//        inserDataToTable(database);
-//        inserDataToTable(database);
-
-//
-//        watchDataShowText(database);
-
-//        database.execSQL(SqlUtil.createTable("a", new String[]{"id interger"}));
-//        database.execSQL(SqlUtil.createTable("b", new String[]{"id interger"}));
-//        database.execSQL(SqlUtil.createTable("c", new String[]{"id interger"}));
-//        database.execSQL(SqlUtil.createTable("d", new String[]{"id interger"}));
 
 
     }
@@ -198,6 +182,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.updateTable:
                 showPopupWindow(R.layout.activity_main, R.layout.option_update_table, createPopupBinder());
                 break;
+            case R.id.deteTable:
+                showPopupWindow(R.layout.activity_main, R.layout.option_delete_table, createPopupBinder());
+                break;
         }
         return true;
     }
@@ -226,13 +213,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //    }
 
     /************************操作数据库中的数据************************/
-    private void inserDataToTable(SQLiteDatabase database) {
-        ContentValues values = new ContentValues();
-        values.put("name", "李玮斌");
-        values.put("age", 20);
-        database.insert("person", null, values);
-    }
-
+//    private void inserDataToTable(SQLiteDatabase database) {
+//        ContentValues values = new ContentValues();
+//        values.put("name", "李玮斌");
+//        values.put("age", 20);
+//        database.insert("person", null, values);
+//    }
+//
 //    private void updateDataToTable(SQLiteDatabase database, String tableName) {
 //        ContentValues values = new ContentValues();
 //        values.put("sex", "male");
@@ -286,6 +273,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             return bindInsertTableOption(contentView, window);
                         case R.layout.option_update_table:
                             return bindUpdateTableOption(contentView, window);
+                        case R.layout.option_delete_table:
+                            return bindDeleteTableOption(contentView, window);
                     }
                     return false;
                 }
@@ -474,7 +463,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     case R.id.buttonOK:
 
-                        if (sqlControlor.insertTable(getTitle().toString(), fields.toArray(new String[fields.size()]))) {
+                        if (sqlControlor.insertTable(getTitle().toString(), fields)) {
                             Toast.makeText(MainActivity.this, "数据成功插入\"" + getTitle().toString() + "\"表格", Toast.LENGTH_SHORT).show();
                             showTableDir(getTitle().toString());
                             dismissWindowAni(window, view);
@@ -601,6 +590,111 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btn.setOnClickListener(listener);
         btn = view.findViewById(R.id.buttonOK);
         btn.setText("更新数据");
+        btn.setOnClickListener(listener);
+        return true;
+    }
+
+
+    private boolean bindDeleteTableOption(final View view, final PopupWindow window) {
+        position = -1;
+        String tableName = null;
+        if (!baseDir()) {
+            tableName = getTitle().toString();
+        } else {
+            Toast.makeText(this, "请选择表格,再删除数据!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        TextView textView = view.findViewById(R.id.title);
+        textView.setText("请输入信息");
+
+
+        final TextView editType = view.findViewById(R.id.editType);
+        editType.setText("类型");
+
+        final TextView editField = view.findViewById(R.id.edit_field);
+
+        final EditText editValue = view.findViewById(R.id.edit_value);
+
+        final List<String> fields = new ArrayList<>();
+        for (String s : sqlControlor.columns(tableName)) {
+            fields.add(s);
+        }
+        final ListView listView = view.findViewById(R.id.listView);
+
+
+        listView.setAdapter(new ArrayAdapter<String>(MainActivity.this, R.layout.support_simple_spinner_dropdown_item, fields));
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MainActivity.this.position = position;
+                String s = fields.get(position);
+                String separator = null;
+                if ((separator = SqlUtil.containSymbol(s)) != null) {
+                    String name = s.substring(0, s.indexOf(separator) + separator.length());
+                    String value = s.substring(s.indexOf(separator) + separator.length());
+                    editField.setText(name);
+                    editValue.setText(value);
+                } else {
+                    editField.setText(s);
+                    editValue.setText("");
+                }
+
+                editType.setText(sqlControlor.getType(getTitle().toString(), editField.getText().toString()));
+
+
+            }
+        });
+
+
+        class Listener implements View.OnClickListener {
+            @Override
+            public void onClick(View v) {
+                switch (v.getId()) {
+
+                    case R.id.buttonAdd:
+                        if (TextUtils.isEmpty(editValue.getText().toString())) return;
+                        if (position != -1) {
+                            fields.remove(position);
+                            position = -1;
+                        } else {
+                            return;
+                        }
+                        if (SqlUtil.containSymbol(editValue.getText().toString()) == null) {
+                            return;
+                        }
+                        fields.add(editField.getText().toString() + editValue.getText().toString());
+                        updateListView(listView);
+                        editValue.setText("");
+                        break;
+
+
+                    case R.id.buttonOK:
+
+                        if (sqlControlor.deleteFromTable(getTitle().toString(), fields)) {
+                            Toast.makeText(MainActivity.this, "数据删除成功", Toast.LENGTH_SHORT).show();
+                            showTableDir(getTitle().toString());
+                            dismissWindowAni(window, view);
+                        } else {
+                            Toast.makeText(MainActivity.this, "数据删除失败!", Toast.LENGTH_SHORT).show();
+                        }
+
+                        break;
+                    case R.id.buttonCancel:
+                        dismissWindowAni(window, view);
+                        break;
+                }
+            }
+        }
+        Listener listener = new Listener();
+        Button btn = view.findViewById(R.id.buttonAdd);
+        btn.setText("更新该列信息");
+        btn.setOnClickListener(listener);
+        btn = view.findViewById(R.id.buttonCancel);
+        btn.setOnClickListener(listener);
+        btn = view.findViewById(R.id.buttonOK);
+        btn.setText("删除数据");
         btn.setOnClickListener(listener);
         return true;
     }
@@ -817,7 +911,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                             @Override
                             public void onLongClick(View view, final int posotion) {
-                                if (sqlControlor.deleteDataForTable(getTitle().toString(), posotion)) {
+                                if (sqlControlor.deleteARow(getTitle().toString(), posotion)) {
                                     Toast.makeText(MainActivity.this, "数据删除成功", Toast.LENGTH_SHORT).show();
 
                                     updateListView(listView);

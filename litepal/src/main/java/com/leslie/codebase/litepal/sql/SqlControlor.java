@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.text.TextUtils;
 
 import org.litepal.LitePalApplication;
 import org.litepal.tablemanager.Connector;
@@ -115,7 +116,7 @@ public class SqlControlor {
         SharedPreferences.Editor editor = typeMap.edit();
         for (String key : typeMap.getAll().keySet()) {
             if (key.startsWith(tableName + "$"))
-            editor.remove(key);
+                editor.remove(key);
         }
         editor.apply();
 
@@ -152,7 +153,7 @@ public class SqlControlor {
         return true;
     }
 
-    public boolean insertTable(String tableName, String[] fields) {
+    public boolean insertTable(String tableName, List<String> fields) {
         String name, value;
         String separator = " = ";
         ContentValues contentValues = new ContentValues();
@@ -182,27 +183,119 @@ public class SqlControlor {
     }
 
     public boolean updateTable(String tableName, List<String> fields, String where) {
-        String separator = "=";
-        for (int i = 0; i < fields.size(); i++) {
-            if (!fields.get(i).contains(separator)) {
-                fields.remove(fields.get(i));
-                i--;
+        if (TextUtils.isEmpty(where)) {
+            return false;
+        }
+
+        String name, value;
+        String separator = " = ";
+        ContentValues contentValues = new ContentValues();
+        for (String field : fields) {
+            try {
+                if (field.contains(separator)) {
+                    name = field.substring(0, field.indexOf(separator));
+                    value = field.substring(field.indexOf(separator) + separator.length());
+                    contentValues.put(name, value);
+                }
+
+            } catch (StringIndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+        if (contentValues.size() == 0) {
+            return false;
+        }
+
+        String symbol = null;
+        String[] clauses = where.split("and");
+        String[] args = new String[clauses.length];
+
+        for (int i = 0; i < clauses.length; i++) {
+
+
+            try {
+                if ((symbol = SqlUtil.containSymbol(clauses[i])) != null) {
+                    name = clauses[i].substring(0, clauses[i].indexOf(symbol)).trim();
+                    value = clauses[i].substring(clauses[i].indexOf(symbol) + symbol.length()).trim();
+
+
+                    clauses[i] = name + symbol + SqlUtil.QUESTION_MARK;
+                    args[i] = value;
+
+                }
+            } catch (StringIndexOutOfBoundsException e) {
+                e.printStackTrace();
             }
         }
 
-        if (fields.size() == 0) {
-            return false;
+        StringBuilder whereClause = new StringBuilder();
+        for (int i = 0; i < clauses.length; i++) {
+            whereClause.append(clauses[i]);
+            if (i != clauses.length - 1) {
+                whereClause.append(" and ");
+            }
+
         }
-        try {
-            mDatabase.execSQL(SqlUtil.updateRows(tableName, fields.toArray(new String[fields.size()]), where));
-        } catch (SQLiteException e) {
-            e.printStackTrace();
-            return false;
-        }
+
+
+        int i = mDatabase.update(tableName, contentValues, whereClause.toString(), args);
+
+        if (i == 0) return false;
 
         fetchValues(tableName);
 
         return true;
+    }
+
+    public boolean deleteFromTable(String tableName, List<String> fields) {
+        if (tableName != null && (currTable == null || currTable.equals(tableName))) {
+            StringBuilder clauses = new StringBuilder();
+            List<String> args = new ArrayList();
+
+            String clause, value;
+            String symbol = null;
+
+            for (String field : fields) {
+                try {
+                    if ((symbol = SqlUtil.containSymbol(field)) != null) {
+                        clause = field.substring(0, field.indexOf(symbol) + symbol.length()).trim();
+                        value = field.substring(field.indexOf(symbol) + symbol.length()).trim();
+
+                        clauses.append(clause + SqlUtil.QUESTION_MARK);
+                        if (fields.indexOf(field) != fields.size() - 1) {
+                            clauses.append(" and ");
+                        }
+
+                        args.add(value);
+
+                    }
+
+                } catch (StringIndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+
+
+            if (clauses.length() == 0 || args.size() == 0) {
+                return false;
+            }
+
+            int row = mDatabase.delete(tableName, clauses.toString(), args.toArray(new String[args.size()]));
+            if (row == 0) return false;
+            else {
+                fetchValues(tableName);
+                return true;
+            }
+        } else {
+            throw new RuntimeException("列表数据异常");
+
+        }
+
+
     }
 
     public Map<String, String> getRow(String tableName, int index) {
@@ -216,7 +309,7 @@ public class SqlControlor {
         }
     }
 
-    public boolean deleteDataForTable(String tableName, int index) {
+    public boolean deleteARow(String tableName, int index) {
         if (tableName != null && (currTable == null || currTable.equals(tableName))) {
             Map<String, String> map = values.get(index);
             StringBuilder builder = new StringBuilder();
