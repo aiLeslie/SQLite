@@ -44,8 +44,6 @@ public class MainActivity extends AppCompatActivity implements NewDBFragment.OnO
     private void init() {
 
         initListView();
-
-
     }
 
     private List convertDatabase(HashMap<String, SQLiteDatabase> databases) {

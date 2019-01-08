@@ -655,15 +655,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     case R.id.buttonAdd:
                         if (TextUtils.isEmpty(editValue.getText().toString())) return;
+                        if (SqlUtil.containSymbol(editValue.getText().toString()) == null) {
+                            return;
+                        }
                         if (position != -1) {
                             fields.remove(position);
                             position = -1;
                         } else {
                             return;
                         }
-                        if (SqlUtil.containSymbol(editValue.getText().toString()) == null) {
-                            return;
-                        }
+
                         fields.add(editField.getText().toString() + editValue.getText().toString());
                         updateListView(listView);
                         editValue.setText("");
